@@ -1,0 +1,16 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Shivani Chowdhry",
+    "section": "",
+    "text": "This is a Quarto website.\n\nplot(mtcars, cex=0.9, pch=16, col=\"firebrick\")"
+  },
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "Research",
+    "section": "",
+    "text": "About this site"
+  }
+]
