@@ -4,7 +4,7 @@
     "href": "index.html",
     "title": "Shivani Chowdhry",
     "section": "",
-    "text": "This is my personal website.\n\nplot(mtcars, cex=0.9, pch=16, col=\"firebrick\")"
+    "text": "This is my personal website which is built mainly to showcase the coding assignments I have worked on in two courses of my Master’s degree in Social Data Analytics and Research at University of Texas at Dallas.\n\nplot(mtcars, cex=0.9, pch=16, col=\"firebrick\")"
   },
   {
     "objectID": "about.html",
