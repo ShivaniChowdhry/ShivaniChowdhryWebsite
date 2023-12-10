@@ -1,0 +1,69 @@
+project:
+  type: website
+
+website:
+  page-navigation: true
+  title: "Shivani Chowdhry"
+  description: "Shivani Chowdhry's professional website"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: about.qmd
+        text: About
+      - text: Assignments - Data Collection & Production
+        menu:
+          - href: assignment1_6302.html 
+            text: Assignment 1
+          - href: assignment2_6302.html 
+            text: Assignment 2
+          - href: assignment3_6302.html 
+            text: Assignment 3
+          - href: assignment4_6302.html
+            text: Assignment 4
+          - href: assignment5_6302.html
+            text: Assignment 5
+          - href: assignment6_6302.html
+            text: Assignment 6
+          - href: assignment7_6302.html
+            text: Assignment 7
+          - href: assignment8_6302.html
+            text: Assignment 8
+          - href: ShivaniChowdhry.github.io/Rynbrandt_finalproject.pdf
+            text: Final Project
+      - text: Assignments - Data Visualization
+        menu:
+          - href: assignment1_6356.html 
+            text: Assignment 1
+          - href: assignment2_6356.html 
+            text: Assignment 2
+          - href: assignment3_6356.html 
+            text: Assignment 3
+          - href: assignment4_6356.html 
+            text: Assignment 4
+          - href: assignment5_6356.html 
+            text: Assignment 5
+          - href: assignment6_6356.html 
+            text: Assignment 6
+          - href: assignment7_6356.html 
+            text: Assignment 7
+          - href: assignment8_6356.html 
+            text: Assignment 8
+          - href: assignment9_6356.html 
+            text: Assignment 9
+          - href: assignment10_6356.html 
+            text: Assignment 10
+          - href: ShivaniChowdhry.github.io/assignment01_Qualtrics.pdf
+            text: Final Project
+            
+        
+  page-footer:
+    right: "This page was built for posting my assignments in EPPS 6302 - Data Collection & Production & EPPS 6356 - Data Visualization | Fall 2023"
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
+
+editor: visual
