@@ -1,0 +1,8 @@
+---
+title: "About this site"
+---
+
+This site is built to showcase my coding assignments from my data analysis and data science classes.
+
+```         
+```

@@ -1,0 +1,148 @@
+---
+title: "Webscraping and text analysis"
+---
+
+### Illustration 1: Webscraping and text analysis of Winston Churchill's Speech -- The Finest Hour
+
+In the first part of this assignment, I have downloaded text data by scraping a simple webpage which has Winston Churchill's speech, "The Finest Hour", organized the data in data frames and then visualized the most frequently used words in the speech in the form of a word cloud.
+
+```{r}
+# Theme: Download text data from web and create wordcloud
+# Set CRAN mirror
+chooseCRANmirror(graphics=FALSE, ind=52)  # Adjust the mirror index as needed
+
+# Install packages
+install.packages(c("package1", "package2", "package3"))
+
+
+# Install the easypackages package 
+install.packages("easypackages")
+library(easypackages)
+
+
+# Load multiple packages using easypackage function "packages"
+packages("XML","wordcloud","RColorBrewer","NLP","tm","quanteda", prompt = T)
+
+# Download text data from website
+wclocation <-URLencode("http://www.historyplace.com/speeches/churchill-hour.htm")
+
+# use htmlTreeParse function to read and parse paragraphs
+doc.html<- htmlTreeParse(wclocation, useInternal=TRUE)
+wc <- unlist(xpathApply(doc.html, '//p', xmlValue))
+wc
+head(wc, 3)
+
+# Vectorize wc
+words.vec <- VectorSource(wc)
+
+# Check the class of words.vec
+class(words.vec)
+
+# Create Corpus object for preprocessing
+words.corpus <- Corpus(words.vec)
+inspect(words.corpus)
+
+# Turn all words to lower case
+words.corpus <- tm_map(words.corpus, content_transformer(tolower))
+
+# Remove punctuations, numbers
+words.corpus <- tm_map(words.corpus, removePunctuation)
+words.corpus <- tm_map(words.corpus, removeNumbers)
+
+# How about stopwords, then uniform bag of words created
+
+words.corpus <- tm_map(words.corpus, removeWords, stopwords("english"))
+
+# Create Term Document Matrix
+
+tdm <- TermDocumentMatrix(words.corpus)
+inspect(tdm)
+
+m <- as.matrix(tdm)
+wordCounts <- rowSums(m)
+wordCounts <- sort(wordCounts, decreasing=TRUE)
+head(wordCounts)
+
+# Create Wordcloud
+cloudFrame<-data.frame(word=names(wordCounts),freq=wordCounts)
+
+set.seed(1234)
+wordcloud(cloudFrame$word,cloudFrame$freq)
+wordcloud(names(wordCounts),wordCounts, min.freq=5,random.order=FALSE, max.words=500,scale=c(3,0.2), rot.per=0.35,colors=brewer.pal(8,"Dark2"))
+
+```
+
+### Illustration 2: Scraping A Wikipedia Webpage with rvest Package in R
+
+In the code below, we are using the Rvest package to read the data from the URL of a wikipedia webpage containing a ranked list of countries by their foreign exchange reserves (<https://en.wikipedia.org/wiki/List_of_countries_by_foreign-exchange_reserves>). The 'html_nodes' function is used to select specific nodes (HTML elements) from the HTML document based on an XPath expression. The XPath expression selects a specific table element on the webpage. Then the 'html_table()' function converts the selected HTML table into a data frame. It assumes that the table structure in the HTML is suitable for conversion into a data frame. So, 'foreignreserve' is expected to be a data frame containing the foreign reserve data extracted from the specified table on the webpage.
+
+Then we extract the first element from the list 'foreignreserve' and assign it to the variable 'fores'. It assumes that foreignreserve is a list, and each element of the list corresponds to a different table on the webpage. Then we assign names correspond to the variables that are expected to be present in the table. And finally use the stringr package to split the "Date" variable and create a new variable named "newdate" in the fores data frame. It removes any trailing notes present in the "Date" variable. Finally, we save the cleaned data frame fores as a CSV file named "fores.csv" without including row names in the CSV file.
+
+```{r}
+# install.packages("tidyverse")
+library(tidyverse)
+# install.packages("rvest")
+library(rvest)
+
+url <- 'https://en.wikipedia.org/wiki/List_of_countries_by_foreign-exchange_reserves'
+#Reading the HTML code from the Wiki website
+wikiforreserve <- read_html(url)
+class(wikiforreserve)
+
+## Get the XPath data using Inspect element feature in Safari, Chrome or Firefox
+## At Inspect tab, look for <table class=....> tag. Leave the table close
+## Right click the table and Copy XPath, paste at html_nodes(xpath =)
+
+foreignreserve <- wikiforreserve %>%
+  html_nodes(xpath='//*[@id="mw-content-text"]/div/table[1]') %>%
+  html_table() 
+class(foreignreserve)
+fores = foreignreserve[[1]]
+
+
+names(fores) <- c("Rank", "Country", "Forexres", "Date", "Change", "Sources")
+colnames(fores)
+
+head(fores$Country, n=10)
+
+## Clean up variables
+## What type is Rank? Ans.:Character
+## How about Date? Ans.: Character
+
+# Remove trailing notes in Date variable
+library(stringr)
+fores$newdate = str_split_fixed(fores$Date, "\\[", n = 2)[, 1]
+
+# Saving as a csv file
+write.csv(fores, "fores.csv", row.names = FALSE)
+
+```
+
+### Illustration 3: Scraping IMDB webpage with rvest Package in R
+
+In the code below, I am scraping the IMDB webpage showing movies/TV shows using advanced search function by applying filter for release date between January 1, 2022 to January 1, 2023, and using the sorting option to sort based on descending order of popularity: <https://www.imdb.com/search/title/?release_date=2022-01-01,2023-01-01>.
+
+I will scrape this page and make a list of top 20 movies/shows released in 2022 in the order of popularity. To do this, I use Rvest package and a bookmark called 'CSS selector' (which helps select the CSS selectors from the source of any webpage) to get the relevant CSS selector for the movie/show titles and rank information from the webpage. The CSS selector extracts the rank and titles text content, and as.numeric converts hthe rank information to numeric values. The I display the top 20 titles based on popularity, shown below.
+
+```{r}
+
+# install.packages("tidyverse")
+library(tidyverse)
+library(tidyr)
+# install.packages("rvest")
+
+url1 = "https://www.imdb.com/search/title/?release_date=2022-01-01,2023-01-01"
+imdb2022 <- read_html(url1)
+
+# Reading Rank+Titles data of movies/shows from the IMDB site using CSS selector
+rank_data_html <- html_nodes(imdb2022,'.ipc-metadata-list-summary-item .ipc-title__text') # Found CSS selector using CSS Selector bookmark!
+print(html_text(rank_data_html))
+
+# Getting out ranks only from rank+movie titles data
+numeric_values_rank1 <- as.numeric(gsub("([0-9]+).*$", "\\1", html_text(rank_data_html)))
+
+# Getting top 20 movies/shows based on popularity in 2022
+title_data_html <- html_nodes(imdb2022, '.ipc-title__text')
+title_data <- html_text(title_data_html)
+ head(title_data, n =20)
+```

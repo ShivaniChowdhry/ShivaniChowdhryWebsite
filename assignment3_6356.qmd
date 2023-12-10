@@ -1,0 +1,154 @@
+---
+title: "assignment3_6356"
+---
+
+**Q1 & 2. Rerun anscombe01.R (in class GitHub) a. Compare the regression models b. Compare different ways to create the plots (e.g. changing colors, line types, plot characters).**
+
+Changes made:
+
+-   **`col = "skyblue"`**: Changed the point color to sky blue.
+
+-   **`pch = 19`**: Used filled circles as the plot character.
+
+-   **`bg = "lightyellow"`**: Set the background color of the points to light yellow.
+
+-   **`cex = 1.5`**: Increased the size of the points for better visibility.
+
+-   **`col = "darkgreen"`**: Changed the color of the regression lines to dark green.
+
+-   **`lty = 2`**: Used dashed lines for the regression lines.
+
+```{r}
+
+## Anscombe (1973) Quartlet
+
+data(anscombe)  # Load Anscombe's data
+View(anscombe) # View the data
+summary(anscombe)
+
+## Simple version
+plot(anscombe$x1,anscombe$y1)
+summary(anscombe)
+
+# Create four model objects
+lm1 <- lm(y1 ~ x1, data=anscombe)
+summary(lm1)
+lm2 <- lm(y2 ~ x2, data=anscombe)
+summary(lm2)
+lm3 <- lm(y3 ~ x3, data=anscombe)
+summary(lm3)
+lm4 <- lm(y4 ~ x4, data=anscombe)
+summary(lm4)
+plot(anscombe$x1,anscombe$y1)
+abline(coefficients(lm1))
+plot(anscombe$x2,anscombe$y2)
+abline(coefficients(lm2))
+plot(anscombe$x3,anscombe$y3)
+abline(coefficients(lm3))
+plot(anscombe$x4,anscombe$y4)
+abline(coefficients(lm4))
+
+
+## Fancy version (per help file)
+
+ff <- y ~ x
+mods <- setNames(as.list(1:4), paste0("lm", 1:4))
+
+# Plot using for loop
+for(i in 1:4) {
+  ff[2:3] <- lapply(paste0(c("y","x"), i), as.name)
+  ## or   ff[[2]] <- as.name(paste0("y", i))
+  ##      ff[[3]] <- as.name(paste0("x", i))
+  mods[[i]] <- lmi <- lm(ff, data = anscombe)
+  print(anova(lmi))
+}
+
+sapply(mods, coef)  # Note the use of this function
+lapply(mods, function(fm) coef(summary(fm)))
+
+# Preparing for the plots
+op <- par(mfrow = c(2, 2), mar = 0.1+c(4,4,1,1), oma =  c(0, 0, 2, 0))
+
+# Plot charts using for loop
+for(i in 1:4) {
+  ff[2:3] <- lapply(paste0(c("y","x"), i), as.name)
+  plot(ff, data = anscombe, col = "skyblue", pch = 19, bg = "lightyellow", cex = 1.5,
+       xlim = c(3, 19), ylim = c(3, 13))
+  abline(mods[[i]], col = "darkgreen")
+}
+mtext("Anscombe's 4 Regression data sets", outer = TRUE, cex = 1.5, lty = 2)
+par(op)
+
+
+```
+
+Q3. Finetuning using ggplot2 tidyvderse package:
+
+```{r}
+library(tidyverse)
+
+# Create a list of colors, line types, and plot characters
+colors <- c("blue", "green", "purple", "orange")
+line_types <- c("solid", "dashed", "dotted", "dotdash")
+plot_chars <- c(16, 17, 18, 19)
+
+# Plot charts using for loop with ggplot2
+for (i in 1:4) {
+  plot_data <- anscombe %>%
+    select(paste0(c("y", "x"), i)) %>%
+    set_names(c("y", "x"))
+
+p <-  ggplot(plot_data, aes(x = x, y = y)) +
+    geom_point(shape = plot_chars[i], size = 3, fill = colors[i], color = "black") +
+    geom_smooth(method = "lm", se = FALSE, linetype = line_types[i], color = colors[i]) +
+    xlim(3, 19) +
+    ylim(3, 13) +
+    labs(title = paste("Dataset", i),
+         x = "x",
+         y = "y") +
+    theme_minimal()
+
+
+print(p)
+}
+```
+
+Q4. Pre-hackathon: plotting Covid data scatterplot
+
+```{r}
+
+# Correct raw URL for the COVID-19 data CSV file
+url <- "https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/owid-covid-data.csv"
+
+# Download and read the CSV file
+owidall <- read.csv(url)
+
+# Deselect cases/rows with OWID
+owidall <- owidall[!grepl("^OWID", owidall$iso_code), ] 
+
+# Subset by continent: Europe
+owideu <- subset(owidall, continent == "Europe")
+
+# Plotting using ggplot2
+
+library(ggplot2)
+
+# Convert date to Date format
+owideu$date <- as.Date(owideu$date)
+
+# Filter data for the years 2020 to 2023
+owideu_20202023 <- owideu %>%
+  filter(date >= as.Date("2020-01-01") & date <= as.Date("2023-08-01"))
+
+# Create a scatterplot
+ggplot(owideu_20202023, aes(x = date, y = new_deaths_smoothed)) +
+  geom_point(color = "#E75480", size = 1) +
+  labs(x = "Date",
+       y = "Covid Deaths in Europe (Daily)") +
+  theme_minimal() +
+  scale_x_date(date_breaks = "2 months", date_labels = "%b %Y") +
+  ggtitle("Covid Deaths in Europe (Daily) - 2020 to 2023") +
+  scale_y_continuous(breaks = seq(0,6000, by = 1000),
+                     labels = c(0,1000,"",3000,"",5000,""))
+
+```

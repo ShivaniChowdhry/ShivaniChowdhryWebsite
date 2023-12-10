@@ -1,0 +1,210 @@
+# Assignment 10: Plotting Spatial Data
+
+### 1. Leaflet map and your location on it
+
+Q1. Create a leaflet map to be uploaded to your personal website (hint: spatial_leaflet01.R)
+
+```{r setup, include=FALSE}
+options(warn = -1)  # Suppress warnings
+
+```
+
+```{r}
+## R Leaflet sample program 
+## file: spatial_leaflet.R
+## Create an interactive map for web using ESRI Leaflet
+# Package:  leaflet, htmlwidgets, tidyverse
+
+## install.packages(c("htmlwidgets", "leaflet", "tidyverse"))
+library(htmlwidgets)
+library(leaflet)
+library(tidyverse)
+
+# Get EPPS geocode information (i.e. lon, lat) from online geocoder websites.
+# For example: https://www.mapdevelopers.com/geocode_tool.php
+
+# Create object using leaflet setting the view at EPPS geo location)
+eppsmap <- leaflet() %>% setView(-96.7478372, 32.9886268, zoom=14)
+
+# Create object to acquire map data from ESRI
+esri <- grep("^Esri", providers, value = TRUE)
+
+for (provider in esri) {
+  eppsmap <- eppsmap %>% addProviderTiles(provider, group = provider)
+}
+
+findmeat <- paste(sep = "<br/>",
+                  "<b><a href='www.linkedin.com/in/shivanichowdhry' target='_blank'>Shivani Chowdhry </a></b>",
+                  "<b><a href='http://epps.utdallas.edu' target='_blank'>School of Economic, </a></b>",
+                  "<b><a href='http://epps.utdallas.edu' target='_blank'>Political and Policy Sciences</a></b>",
+                  "<b><a href='http://www.utdallas.edu' target='_blank'>University of Texas at Dallas</a></b>",
+                  "800 West Campbell Road",
+                  "Richardson TX 75080"
+)
+
+# Use htmlwidget::onRender function to  add custom behavior to the leaflet map using native JavaScript.
+
+eppsmap %>%
+  addLayersControl(baseGroups = names(esri),
+                   options = layersControlOptions(collapsed = TRUE)) %>%
+  # addMiniMap(tiles = esri[[1]], toggleDisplay = TRUE,
+  #           position = "bottomleft") %>%
+  addMarkers(eppsmap, lng=-96.7478372, lat=32.9886268, popup=findmeat)  %>%
+  htmlwidgets::onRender("
+                        function(el, x) {
+                        var myMap = this;
+                        myMap.on('baselayerchange',
+                        function (e) {
+                        myMap.minimap.changeLayer(L.tileLayer.provider(e.name));
+                        })
+                        }")
+
+```
+
+### 2. Comparing two different years of Census data and showing geographical distribution of median income by state in 2010 and 2021 (extracted using the API key)
+
+Q 2,3,4: Get an API key from Census using this website (<http://api.census.gov/data/key_signup.html)>. Run spatialdata01.R and spatialdata02.R. Compare different years of data (e.g. 2010 and 2020)
+
+```{r}
+
+
+# Collecting and mapping Census data using API
+options(repos = c(CRAN = "https://cloud.r-project.org/"))
+
+install.packages(c("tidyverse", "ggmap","mapproj", "tidycensus","tigris"))
+lapply(c("tidyverse", "ggmap","mapproj", "tidycensus","tigris"), require, character.only = TRUE)
+
+# More on Census data: https://rconsortium.github.io/censusguide/r-packages-all.html
+# an API key is required to get Census data for map creation
+# Obtain the key at http://api.census.gov/data/key_signup.html
+# Enter information about organization and email address, then consent
+# Key will be provided to email, click on activate key (wait a few minutes to activate)
+# Store the key using the following function:
+# census_api_key("key", install = TRUE)
+# API key will be stored in  .Renviron and can be accessed by Sys.getenv("CENSUS_API_KEY")
+
+install.packages("tidycensus","tigris","ggplot2")
+# Substitute with your own Census API key
+
+census_api_key("38d499652ef6593d6b4189e66305cb7842fcb0c3", overwrite = TRUE, install = TRUE) 
+
+
+library(tidycensus)
+library(tigris) # Load Census TIGER/Line Shapefiles
+options(tigris_use_cache = TRUE)
+
+# Get a list of American Community Survey (ACS) 2019 variables
+acs19 = tidycensus::load_variables(2019, "acs5", cache = TRUE)
+acs19_Profile = load_variables(2019 , "acs5/profile", cache = TRUE)
+us_median_age19 <- get_acs(
+  geography = "state",
+  variables = "B01002_001",
+  year = 2019,
+  survey = "acs1",
+  geometry = TRUE,
+  resolution = "20m"
+) %>%
+  shift_geometry()
+
+plot(us_median_age19$geometry)
+ggplot(data = us_median_age19, aes(fill = estimate)) + 
+  geom_sf(col="white") +  # Why color is white?
+  theme_bw() +
+  scale_fill_distiller(palette = "Blues",  # Try other palette? Trying 'Blues' from RColorBrewer
+                       direction = 1) + 
+  labs(title = "  Median Age by State, 2019",
+       caption = "Data source: 2019 1-year ACS, US Census Bureau",
+       fill = "", family="Times New Roman") +
+  theme(legend.position=c(.08,.6), legend.direction="vertical") +
+  theme(text = element_text(family = "Times New Roman"), plot.title = element_text(hjust = 0.5))
+
+# Create another map using 2010 and 2020 data and do comparison?
+# Get median age data for 2010
+us_median_age10 <- get_acs(
+  geography = "state",
+  variables = "B01002_001",
+  year = 2010,
+  survey = "acs1",
+  geometry = TRUE,
+  resolution = "20m"
+) %>%
+  shift_geometry()
+
+# Get median age data for 2021. (The regular 1-year ACS for 2020 was not released and is not available in tidycensu)
+
+us_median_age21 <- get_acs(
+  geography = "state",
+  variables = "B01002_001",
+  year = 2021,
+  survey = "acs1",
+  geometry = TRUE,
+  resolution = "20m"
+) %>%
+  shift_geometry()
+
+# Plot comparison
+library(gridExtra)
+
+# Plot for 2010
+plot1 <- ggplot(data = us_median_age10, aes(fill = estimate)) + 
+  geom_sf() +
+  theme_bw() +
+  scale_fill_distiller(palette = "Blues", direction = 1) +
+  labs(title = "Median Age by State, 2010",
+       caption = "Data source: 2010 1-year ACS, US Census Bureau")
+
+
+# Plot for 2020
+plot2 <- ggplot(data = us_median_age21, aes(fill = estimate)) + 
+  geom_sf() +
+  theme_bw() +
+  scale_fill_distiller(palette = "Greens", direction = 1) +
+  labs(title = "Median Age by State, 2020",
+       caption = "Data source: 2020 1-year ACS, US Census Bureau")
+
+# Arrange the plots
+grid.arrange(plot1, plot2, ncol = 2, widths = c(1, 1))
+
+```
+
+### 3. Interactive map of Dallas area income distribution
+
+```{r}
+# Collecting and mapping Census data using API: State data and maps
+install.packages(c("tidyverse", "ggmap","mapproj", "tidycensus","tigris", "tmap", "mapview"))
+lapply(c("tidyverse", "ggmap","mapproj", "tidycensus","tigris", "tmap", "mapview"), require, character.only = TRUE)
+library(tidycensus)
+options(tigris_use_cache = TRUE)
+
+
+tx_income <- get_acs(
+  geography = "tract", 
+  variables = "B19013_001",
+  state = "TX", 
+  year = 2020,
+  geometry = TRUE
+)
+tx_income
+plot(tx_income["estimate"])
+
+
+library(tmap)
+tmap_mode("view")
+
+dallas_income <- get_acs(
+  geography = "tract",
+  variables = "B19013_001",
+  year = 2020,
+  state = "TX",
+  county = "Dallas",
+  geometry = TRUE
+)
+
+tm_shape(dallas_income) + 
+  tm_fill(col = "estimate", palette = "YlOrRd",
+          alpha = 0.5)
+
+library(mapview)
+mapView(dallas_income, zcol = "estimate")
+
+```

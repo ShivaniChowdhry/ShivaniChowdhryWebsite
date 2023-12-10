@@ -1,0 +1,100 @@
+---
+title: "Assignment 9: Visualizing Time Series Data in R"
+---
+
+Q1. Collect your own time series data and import into R (e.g. you can use quantmod to collect stock data).
+
+```{r}
+# Install and load required packages
+options(repos = c(CRAN = "https://cloud.r-project.org/"))
+
+install.packages("quantmod")
+library(quantmod)
+
+# Define the stock symbol and the date range
+stock_symbol <- "AAPL"
+start_date <- as.Date("2022-01-01")
+end_date <- Sys.Date()
+
+# Download stock data using getSymbols
+getSymbols(stock_symbol, src = "yahoo", from = start_date, to = end_date)
+
+# Extract the adjusted closing prices
+stock_data <- Cl(get(stock_symbol))
+
+# Print the first few rows of the data
+head(stock_data)
+
+
+# Plot the chart
+chartSeries(AAPL, type = c("auto", "candlesticks", "matchsticks", "bars", "line"), theme = "white")
+
+
+```
+
+Q2. Examine class of time series object and variables.
+
+```{r}
+# Examine the class of the time series object
+class(stock_data)
+
+# Examine the structure of the time series object
+str(stock_data)
+```
+
+Q3. Generate time series charts using tsstudio01.R and dygraphs01.R (in Teams)
+
+```{r}
+# Plotting time series data using TSstudio
+# install.packages(c("quantmod", "tidyverse","TSstudio"))
+# lapply(c("quantmod", "tidyverse","TSstudio"), require, character.only = TRUE)
+
+library(TSstudio)
+quantmod::getSymbols("AAPL", src="yahoo")
+class(AAPL)
+ts_plot(AAPL$AAPL.Adjusted, 
+        title = "Apple Stock prices",
+        Ytitle = "")
+class(AAPL$AAPL.Adjusted) # What class is this object?
+
+# Some sample dataset from TSstudio
+ts_seasonal(AAPL, type = "") # month-year matrix data
+```
+
+```{r}
+library(dygraphs)
+par(family="Palatino")
+quantmod::getSymbols("AAPL", src="yahoo")
+
+class(AAPL)
+m = tail(AAPL, n=30)
+m =m[,1:(ncol(m)-2)] # drop last two columns 
+names(m)<-c('Open', 'High', 'Low', 'Close') # rename columns for plotting
+path <- getwd()
+setwd("C:/Users/shiva/Box/My desktop UTD folder backup/UTD/Fall 2023/Data Visualization/Assignments") # place dygraph.css into the same directory
+dygraph(m, main = "Apple Stock Prices (Candlestick Chart)")  |>  
+  dyCandlestickGroup(c('Open', 'High', 'Low', 'Close')) |> 
+  dyCandlestick()  |> 
+  dyLegend(show = "always", hideOnMouseOut = T) |> 
+  dyCSS("dygraph.css")
+
+```
+
+a\. Analyze time series variables: i. Trend ii. Stationarity iii. pdq
+
+i\. Trend: Trend refers to the general movement of the data over time. The time series plot shows us that the overall trend of the Apple stock data had a fairly stable neutral trend From Januray 2022 until November 2022, which has since been on a general upwards trend.
+
+ii\. Stationarity: To check for stationarity, we plot the time series data and check for no specific trend, constant mean and variance and nonseasonality. Since the Apple stock price data shows a general positive trend, it is nonstationary.
+
+iii\. ARIMA Model Parameters (pdq): AutoCorrelation and Partial AutoCorrelation Function (ACF and PACF): The grid search approach and visual inspection are essential steps in finding appropriate values for p and q. The selected model should be based on both statistical measures and practical considerations. The auto.arima function automatically searches for the best ARIMA model based on AIC (Akaike Information Criterion). The function considers different combinations of p, d, and q and selects the model with the lowest AIC value -- for this case, chosen as, ARIMA (5,2,0) as shown in code below.
+
+```{r}
+install.packages("forecast")
+library(forecast)
+
+# Grid search for ARIMA
+auto_arima_model <- auto.arima(AAPL$AAPL.Adjusted)
+summary(auto_arima_model)
+
+
+```

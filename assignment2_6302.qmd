@@ -1,0 +1,45 @@
+---
+title: "Google Trends Data Analysis: Using Google Trends website vs gtrendsR package in R"
+---
+
+1.  **Google Trends Website to download and visualize time trends with data:**
+
+Using whatever search filters user provides including the search terms or keywords (in this case, I have provided 3 terms, 'Biden', 'Trump', and 'Election'), and the time duration and geographical location filters, Google Trends allows us to explore the popularity of these specified terms over time. Google Trends' interest over time plot for my search keywords looks like this:
+
+![](images/GoogleTrends_BidenTrumpElections.png)
+
+2.  **Using gtrendsR package in R to pull google trends data and visualize it:**
+
+```         
+install.packages("gtrendsR")
+library(gtrendsR)
+library(ggplot2)
+
+BidenTrumpElection = gtrends(c("Trump","Biden","election"), time = "all")
+par(family="Georgia")
+plot(BidenTrumpElection)
+```
+
+![](images/Intovertimeplot.png){width="484"}
+
+GtrendsR package provides a convenient way to retrieve and display Google Trends data in R. It can also be used to retrieve Google Trends data for a specific keyword and geographic region and time period, and allows the use of plot function to visualize the trends over time. One can also use ggplot2 package to create more complex visualizations of this data, for example, I have created below a time-series plot of this data to show time trends of Google searches for these keywords:
+
+```         
+# Explore and preprocess data for time-series plot
+time_series_data <- BidenTrumpElection$interest_over_time
+library(ggplot2)
+
+# Create a list of colors for keywords
+keyword_colors <- c("blue", "green", "red")  # Add more colors if needed
+
+# Create the time-series plot
+ggplot(data = time_series_data, aes(x = date)) +
+  geom_line(aes(y = hits, color = keyword)) +
+  scale_color_manual(values = keyword_colors) +
+  xlab("Date") +
+  ylab("Search Interest") +
+  labs(title = "Google Trends Search Interest Over Time") +
+  theme_minimal()
+```
+
+![](images/Rplot_GoogleTrends-01.png)

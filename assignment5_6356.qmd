@@ -1,0 +1,110 @@
+---
+title: "Creating various graphs using basic R Graphics functions"
+---
+
+Q1. Using sample datasets or own data, create the following charts using only R graphics functions (i.e. without using any other packages):
+
+a\. Histogram b. Barchart (Vertical & Horizonal) c. Piechart d. Boxplot & e. Scatterplot
+
+```{r}
+# Generating Sample Data
+set.seed(123)
+data <- data.frame(
+  Age = rnorm(100, mean = 30, sd = 5),
+  Income = rpois(100, lambda = 50000),
+  Category = sample(c("A", "B", "C"), 100, replace = TRUE),
+  Height = rnorm(100, mean = 170, sd = 10),
+  Weight = rnorm(100, mean = 70, sd = 5),
+  Sales = rpois(100, lambda = 30)
+)
+
+# a. Histogram
+hist(data$Age, main = "Histogram of Age", xlab = "Age", col = "skyblue", border = "black")
+
+# b. Barchart (Vertical)
+barplot(table(data$Category), main = "Vertical Barchart of Categories", xlab = "Category", ylab = "Frequency", col = "lightblue")
+
+# b. Barchart (Horizontal)
+barplot(table(data$Category), main = "Horizontal Barchart of Categories", xlab = "Frequency", ylab = "Category", col = "lightgreen", horiz = TRUE)
+
+# c. Piechart
+pie(table(data$Category), main = "Piechart of Categories", col = rainbow(length(unique(data$Category))), cex = 0.8)
+
+# d. Boxplot
+boxplot(data$Height, data$Weight, main = "Boxplot of Height and Weight", names = c("Height", "Weight"), col = c("lightblue", "lightgreen"))
+
+# e. Scatterplot
+plot(data$Income, data$Sales, main = "Scatterplot of Income and Sales", xlab = "Income", ylab = "Sales", col = "darkorange", pch = 16)
+
+```
+
+Q 2. Repeat using ggplot2.
+
+```{r}
+# Install and load ggplot2
+if (!requireNamespace("ggplot2", quietly = TRUE)) {
+  install.packages("ggplot2")
+}
+library(ggplot2)
+
+# Generating Sample Data
+set.seed(123)
+data <- data.frame(
+  Age = rnorm(100, mean = 30, sd = 5),
+  Income = rpois(100, lambda = 50000),
+  Category = sample(c("A", "B", "C"), 100, replace = TRUE),
+  Height = rnorm(100, mean = 170, sd = 10),
+  Weight = rnorm(100, mean = 70, sd = 5),
+  Sales = rpois(100, lambda = 30)
+)
+
+# a. Histogram
+ggplot(data, aes(x = Age)) +
+  geom_histogram(binwidth = 2, fill = "skyblue", color = "black") +
+  ggtitle("Histogram of Age") +
+  xlab("Age") +
+  ylab("Frequency")
+
+# b. Barchart (Vertical)
+ggplot(data, aes(x = Category)) +
+  geom_bar(fill = "lightblue") +
+  ggtitle("Vertical Barchart of Categories") +
+  xlab("Category") +
+  ylab("Frequency")
+
+# b. Barchart (Horizontal)
+ggplot(data, aes(x = Category)) +
+  geom_bar(fill = "lightgreen") +
+  ggtitle("Horizontal Barchart of Categories") +
+  xlab("Frequency") +
+  ylab("Category") +
+  coord_flip()
+
+# c. Piechart (Note: Pie charts are not recommended, but included for completeness)
+ggplot(data, aes(x = "", fill = Category)) +
+  geom_bar(width = 1) +
+  ggtitle("Piechart of Categories") +
+  coord_polar(theta = "y") +
+  theme_void()
+
+# d. Boxplot
+ggplot(data, aes(x = factor(1), y = Height)) +
+  geom_boxplot(fill = "lightblue") +
+  ggtitle("Boxplot of Height") +
+  xlab("") +
+  ylab("Height")
+
+ggplot(data, aes(x = factor(1), y = Weight)) +
+  geom_boxplot(fill = "lightgreen") +
+  ggtitle("Boxplot of Weight") +
+  xlab("") +
+  ylab("Weight")
+
+# e. Scatterplot
+ggplot(data, aes(x = Income, y = Sales)) +
+  geom_point(color = "darkorange", size = 3) +
+  ggtitle("Scatterplot of Income and Sales") +
+  xlab("Income") +
+  ylab("Sales")
+
+```

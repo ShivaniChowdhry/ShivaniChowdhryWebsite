@@ -1,0 +1,16 @@
+---
+title: "assignment6_6356"
+---
+
+Q. Build a Shiny app using the following datasets (in datasets library in R): (i) mtcars, (ii) USArrests, and (iii) uspop. Insert an iframe to your GitHub website/page to showcase your data.
+
+```         
+```
+
+<https://shivani-chowdhry.shinyapps.io/myshinycodeassignment6/>
+
+```{=html}
+<iframe src="https://shivani-chowdhry.shinyapps.io/myshinycodeassignment6/" width="800" height="600">
+
+</iframe>
+```

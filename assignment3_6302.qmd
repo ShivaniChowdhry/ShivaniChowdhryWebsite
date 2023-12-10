@@ -1,0 +1,119 @@
+# Text Analysis using Quanteda in R
+
+## Using Latent Semantic Analysis to analyze Twitter data
+
+Latent Semantic Analysis (LSA) is a popular, dimensionality-reduction technique in natural language processing that is used to discover the hidden semantic structure in a large collection of documents. The goal of LSA is to capture the latent (hidden) relationships between words and documents, allowing for a more nuanced understanding of the semantic structure of the text. LSA has been used in various text analysis tasks, such as document clustering, information retrieval, and topic modeling. It is particularly useful when dealing with large and high-dimensional text datasets where the noise or redundancy in the data can be reduced through dimensionality reduction.
+
+Below is an example in which this technique is used on Twitter data on Biden-Xi summit held in 2021:
+
+```{r}
+# Sample program for using quanteda for text modeling and analysis
+# Documentation: vignette("quickstart", package = "quanteda")
+# Website: https://quanteda.io/
+
+# install.packages(c("readr",quanteda", "quanteda.textmodels", "quanteda.textplots","quanteda.textstats","tidyverse"))
+library(quanteda)
+library(quanteda.textmodels)
+library(quanteda.textplots)
+library(readr)
+library(ggplot2)
+
+# Twitter data about President Biden and Xi summit in Novemeber 2021
+# Do some background search/study on the event
+# 
+summit <- read_csv("https://raw.githubusercontent.com/datageneration/datamethods/master/textanalytics/summit_11162021.csv")
+View(summit)
+```
+
+We then create a new object **`sum_twt`** containing the text of the tweets and tokenize them using the **`tokens`** function from the **`quanteda`** package. Finally, we create a document-feature matrix (dfm) using the **`dfm`** function.
+
+```{r}
+# Create a new object containing the tweets data
+sum_twt = summit$text
+toks = tokens(sum_twt)
+sumtwtdfm <- dfm(toks)
+```
+
+Now, **`sumtwtdfm`** should be a document-feature matrix that can be used for further analysis, such as sentiment analysis, word frequency analysis, or topic modeling. We will be performing LSA in the code below:
+
+```{r}
+# Latent Semantic Analysis
+sum_lsa <- textmodel_lsa(sumtwtdfm)
+summary(sum_lsa)
+## Tokenizing the tweet text again, this time removing punctuation, and then creating a new document-feature matrix
+tweet_dfm <- tokens(sum_twt, remove_punct = TRUE) %>%
+  dfm()
+head(tweet_dfm)
+## Extracting and analyzing hashtags
+tag_dfm <- dfm_select(tweet_dfm, pattern = "#*")
+toptag <- names(topfeatures(tag_dfm, 50))
+head(toptag, 10)
+```
+
+So, the top 10 hashtags used in the tweets are:
+
+```         
+"#china"          "#biden"          "#xijinping"      "#joebiden"       "#america" "#americans"      "#coronavirus"    "#fentanyl"       "#xi"        "#uyghurgenocide"
+```
+
+Now, we are using the **`quanteda.textplots`** package to visualize a network plot of co-occurrence relationships among hashtags in the tweet data. The parameters like **`min_freq`**, **`edge_alpha`**, and **`edge_size`** control the appearance of the network plot.
+
+```{r}
+## Visualizing a network plot of relationships among hashtags in tweets
+library("quanteda.textplots")
+tag_fcm <- fcm(tag_dfm)
+head(tag_fcm)
+topgat_fcm <- fcm_select(tag_fcm, pattern = toptag)
+textplot_network(topgat_fcm, min_freq = 50, edge_alpha = 0.8, edge_size = 5)
+```
+
+The above plot shows that the most important hashtags that frequently occur together are coronavirus, fentanyl, americans, and the two heads of state who attended the summit. Some hashtags are forming central nodes connecting different clusters, for example, hashtag biden is associated with hashtags of human rights, Uyghurs and Tibetians, whereas hashtag China is associated with hashtags discussing relationships between US, China and Taiwan.
+
+Next. we are working with user mentions (Twitter handles) in the tweet data. First we select terms (features) from **`tweet_dfm`** that match the pattern "\@\*" (user mentions), then identifiy the top 50 user mentions using the **`topfeatures`** function and store their names in the **`topuser`** object. The **`head`** function is used to display the first 20 user mentions. Then we are creating a feature co-occurence matrix based on document of user mentions, and displaying the first 20 rows. Then the code selects only the co-occurrence relationships of the top user mentions identified earlier from the entire co-occurrence matrix and uses textplot_network to create **a network plot of the co-occurrence relationships among the top user mentions.**
+
+```{r}
+user_dfm <- dfm_select(tweet_dfm, pattern = "@*")
+topuser <- names(topfeatures(user_dfm, 50))
+head(topuser, 20)
+user_fcm <- fcm(user_dfm)
+head(user_fcm, 20)
+
+user_fcm <- fcm_select(user_fcm, pattern = topuser)
+textplot_network(user_fcm, min_freq = 20, edge_color = "firebrick", edge_alpha = 0.8, edge_size = 5)
+```
+
+As the plot shows, the bulk of the Tweet discussion is surrounding the users @capitalonearena, @nba, @eneskanter, @pelicansnba, and @washwizards. Thus, network analysis of users in a Twitter discussion canreveal valuable insights into the structure, dynamics, and patterns of interactions among clusters or communities of users who frequently interact with each other. In other words, it helps identify influential users or hubs who have a large number of connections.
+
+## **Analyzing Presidential Speeches of American presidents since 1949 using Quanteda in R**
+
+Now, I'll walk through some of the quanteda package's extra features for text analysis and visualization to analyze how frequently particular terms are used in US presidential speeches. The corpus of American presidential speeches since 1949 is subjected to a Keyword-in-Context (KWIC) analysis, and for the visualization, I have created X-ray maps for any mentions of the terms "American", "People" and "communist" that illustrates the words's distribution and context in a graphical representtation.
+
+```{r}
+library(quanteda.textstats)
+data_corpus_inaugural_subset <- 
+corpus_subset(data_corpus_inaugural, Year > 1949)
+kwic(tokens(data_corpus_inaugural_subset), pattern = "american") %>%
+  textplot_xray()
+
+```
+
+```{r}
+textplot_xray(
+  kwic(tokens(data_corpus_inaugural_subset), pattern = "american"),
+  kwic(tokens(data_corpus_inaugural_subset), pattern = "people"),
+  kwic(tokens(data_corpus_inaugural_subset), pattern = "communist")
+)
+```
+
+```{r}
+theme_set(theme_bw())
+g <- textplot_xray(
+  kwic(tokens(data_corpus_inaugural_subset), pattern = "american"),
+  kwic(tokens(data_corpus_inaugural_subset), pattern = "people"),
+  kwic(tokens(data_corpus_inaugural_subset), pattern = "communist")
+)
+g + aes(color = keyword) + 
+  scale_color_manual(values = c("blue", "red", "green")) +
+  theme(legend.position = "none")
+
+```
